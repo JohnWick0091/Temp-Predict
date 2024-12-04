@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temperature Prediction Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --background-color: #ecf0f1;
+            --gradient-start: #6a11cb;
+            --gradient-end: #2575fc;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            color: #ffffff;
+        }
+
+        .dashboard {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            padding: 30px;
+            width: 90%;
+            max-width: 700px;
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .temperature-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .current-temp {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+        }
+
+        .current-temp i {
+            margin-right: 15px;
+            color: #ffd700;
+        }
+
+        .prediction-section {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .creator-info {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            font-size: 1rem;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            max-width: 90%;
+            width: 1000px;
+            z-index: 10;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .loading {
+            text-align: center;
+            color: #ffffff;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="temperature-display" id="temperatureDisplay">
+            <div class="loading">Loading temperature data...</div>
+        </div>
+        <div class="prediction-section" id="predictionSection">
+            <p>Prediction loading...</p>
+        </div>
+    </div>
+
+    <div class="creator-info">
+        <strong>Temperature Prediction Project</strong><br>
+        Creators: Harshit Singh Patel | Harshita Sharma | |Harshita Kumari | Himalaya Vashistha<br>
+        Group 12 - Advanced Temperature Forecasting
+    </div>
+
+    <script>
+        async function fetchTemperatureData() {
+            try {
+                const response = await fetch('http://localhost:5000/api/temperature', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    mode: 'cors'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const data = await response.json();
+                updateDashboard(data);
+            } catch (error) {
+                console.error('Error fetching temperature data:', error);
+                document.getElementById('temperatureDisplay').innerHTML = `
+                    <div class="current-temp">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Error fetching data
+                    </div>
+                `;
+            }
+        }
+
+        function updateDashboard(data) {
+            const temperatureDisplay = document.getElementById('temperatureDisplay');
+            const predictionSection = document.getElementById('predictionSection');
+
+            if (data.error) {
+                temperatureDisplay.innerHTML = `
+                    <div class="current-temp">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Error: ${data.error}
+                    </div>
+                `;
+                return;
+            }
+
+            temperatureDisplay.innerHTML = `
+                <div class="current-temp">
+                    <i class="fas fa-temperature-high"></i>
+                    ${data.temperature.toFixed(1)}°C
+                </div>
+                <div>
+                    <p>Humidity: ${data.humidity}%</p>
+                </div>
+            `;
+
+            predictionSection.innerHTML = `
+                <h3>Temperature Prediction</h3>
+                <p>Predicted Temperature: ${data.Temp_Pre}°C</p>
+            `;
+        }
+
+        // Fetch data immediately and then every 5 minutes
+        fetchTemperatureData();
+        setInterval(fetchTemperatureData, 5 * 60 * 1000);
+    </script>
+</body>
+</html>
